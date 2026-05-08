@@ -1,6 +1,10 @@
-"""Pure title helper for the r/NYYankees streak based win post."""
+"""Pure title helper for the r/NYYankees streak based win post.
 
-from __future__ import annotations
+This file is intentionally Python 2.7 compatible because the public
+Baseball-GDT-Bot-GUI repo used by Yankeebot is a Python 2.7 codebase.
+
+No Reddit calls. No MLB calls. No file reads. No file writes.
+"""
 
 KNOWN_WIN_PREFIXES = (
     "IT'S WHAT YOU WANT",
@@ -10,7 +14,7 @@ KNOWN_WIN_PREFIXES = (
 )
 
 
-def clean_streak(streak: int | str | None) -> int:
+def clean_streak(streak):
     """Return a safe streak number. Bad values become 1."""
     try:
         value = int(streak) if streak is not None else 1
@@ -19,18 +23,18 @@ def clean_streak(streak: int | str | None) -> int:
     return max(1, value)
 
 
-def theee_word(streak: int | str | None) -> str:
+def theee_word(streak):
     """Return THE with E count matching the active Yankees win streak."""
     streak_num = clean_streak(streak)
     return "TH" + ("E" * streak_num)
 
 
-def build_theee_prefix(streak: int | str | None) -> str:
+def build_theee_prefix(streak):
     """Return the full streak prefix."""
-    return f"{theee_word(streak)} YANKEES WIN"
+    return "%s YANKEES WIN" % theee_word(streak)
 
 
-def replace_existing_prefix(existing_title: str, streak: int | str | None) -> str:
+def replace_existing_prefix(existing_title, streak):
     """
     Swap only the text before the first colon.
 
@@ -43,24 +47,20 @@ def replace_existing_prefix(existing_title: str, streak: int | str | None) -> st
 
     if ":" in title:
         suffix = title.split(":", 1)[1].strip()
-        return f"{build_theee_prefix(streak)}: {suffix}"
+        return "%s: %s" % (build_theee_prefix(streak), suffix)
 
     upper_title = title.upper()
     for prefix in KNOWN_WIN_PREFIXES:
         if upper_title.startswith(prefix):
-            suffix = title[len(prefix) :].strip(" :-")
+            suffix = title[len(prefix):].strip(" :-")
             if suffix:
-                return f"{build_theee_prefix(streak)}: {suffix}"
+                return "%s: %s" % (build_theee_prefix(streak), suffix)
             return build_theee_prefix(streak)
 
-    return f"{build_theee_prefix(streak)}: {title}"
+    return "%s: %s" % (build_theee_prefix(streak), title)
 
 
-def replace_prefix_if_yankees_won(
-    existing_title: str,
-    streak: int | str | None,
-    yankees_won: bool,
-) -> str:
+def replace_prefix_if_yankees_won(existing_title, streak, yankees_won):
     """
     Safe wrapper for callers that run on more than win threads.
 
@@ -73,13 +73,12 @@ def replace_prefix_if_yankees_won(
     return replace_existing_prefix(existing_title, streak)
 
 
-def build_win_title(
-    streak: int | str | None,
-    opponent: str,
-    yankees_score: int | str,
-    opponent_score: int | str,
-    game_date: str,
-) -> str:
+def build_win_title(streak, opponent, yankees_score, opponent_score, game_date):
     """Build a standalone Reddit post title."""
-    score_text = f"The Yankees defeated the {opponent} {yankees_score}-{opponent_score} - {game_date}"
+    score_text = "The Yankees defeated the %s %s-%s - %s" % (
+        opponent,
+        yankees_score,
+        opponent_score,
+        game_date,
+    )
     return replace_existing_prefix(score_text, streak)
